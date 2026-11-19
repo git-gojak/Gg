@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0f766e">
+  <meta name="description" content="Sistem Pendataan Absensi QR Text, Koreksi Kitab Berkala, Nilai Harian, Syafawi, dan UAS Siswa.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>SiAkad QR — Absensi & Akademik Siswa</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="./assets/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="./assets/icons/icon-192.png">
+  <link rel="stylesheet" href="./assets/css/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Sidebar Navigasi (Desktop) -->
+    <aside class="sidebar" aria-label="Navigasi Utama">
+      <div class="brand">
+        <img src="./assets/icons/icon-192.png" alt="Logo SiAkad QR" class="brand-logo">
+        <div>
+          <h1 class="brand-title">SiAkad QR</h1>
+          <span class="brand-subtitle">Absensi &amp; Penilaian</span>
+        </div>
+      </div>
+
+      <nav class="nav-list" id="desktop-nav">
+        <button type="button" class="nav-item active" data-view="dashboard">
+          <span class="nav-icon" aria-hidden="true">&#9638;</span>
+          <span>Dashboard</span>
+        </button>
+        <button type="button" class="nav-item" data-view="attendance">
+          <span class="nav-icon" aria-hidden="true">&#9745;</span>
+          <span>Absensi QR</span>
+        </button>
+        <button type="button" class="nav-item" data-view="kitab">
+          <span class="nav-icon" aria-hidden="true">&#128214;</span>
+          <span>Koreksi Kitab</span>
+        </button>
+        <button type="button" class="nav-item" data-view="daily">
+          <span class="nav-icon" aria-hidden="true">&#9998;</span>
+          <span>Nilai Harian</span>
+        </button>
+        <button type="button" class="nav-item" data-view="syafawi">
+          <span class="nav-icon" aria-hidden="true">&#127908;</span>
+          <span>Nilai Syafawi</span>
+        </button>
+        <button type="button" class="nav-item" data-view="uas">
+          <span class="nav-icon" aria-hidden="true">&#127891;</span>
+          <span>Nilai UAS</span>
+        </button>
+        <button type="button" class="nav-item" data-view="students">
+          <span class="nav-icon" aria-hidden="true">&#128101;</span>
+          <span>Data Siswa</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div id="role-indicator-desktop" class="role-badge role-public">Mode Publik (Read-Only)</div>
+        <button type="button" id="btn-admin-desktop" class="btn btn-primary btn-block">Masuk Admin</button>
+        <button type="button" id="btn-install-desktop" class="btn btn-outline btn-block hidden">Instal Aplikasi (PWA)</button>
+        <button type="button" id="btn-install-guide-desktop" class="btn btn-ghost btn-block">Petunjuk Instalasi</button>
+      </div>
+    </aside>
+
+    <!-- Area Konten Utama -->
+    <div class="main-wrapper">
+      <!-- Topbar Mobile & Status -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <img src="./assets/icons/icon-192.png" alt="Logo" class="topbar-logo mobile-only">
+          <div>
+            <h2 id="page-title" class="page-title">Dashboard Akademik</h2>
+            <p id="page-subtitle" class="page-subtitle">Pantauan kehadiran &amp; capaian belajar siswa</p>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <span id="connection-badge" class="status-pill status-online">Online</span>
+          <button type="button" id="btn-refresh" class="btn btn-outline btn-sm" title="Muat Ulang Data">Muat Ulang</button>
+          <button type="button" id="btn-install-mobile" class="btn btn-outline btn-sm mobile-only hidden">Instal</button>
+          <button type="button" id="btn-admin-mobile" class="btn btn-primary btn-sm mobile-only">Admin</button>
+        </div>
+      </header>
+
+      <!-- Banner Pembaruan Versi Service Worker -->
+      <div id="sw-update-banner" class="update-banner hidden" role="status">
+        <span>Versi baru aplikasi tersedia.</span>
+        <button type="button" id="btn-sw-reload" class="btn btn-sm btn-primary">Perbarui Sekarang</button>
+      </div>
+
+      <!-- Banner Peringatan Konfigurasi API -->
+      <div id="config-warning-banner" class="warning-banner hidden" role="alert">
+        <strong>Perhatian:</strong> URL Google Apps Script Web App belum diatur pada <code>js/config.js</code>. Aplikasi berjalan dalam mode pratinjau kosong sampai URL API dipasang.
+      </div>
+
+      <!-- Kontainer State Global (Loading / Error) -->
+      <main class="content-area" id="app-content">
+        <!-- VIEW: DASHBOARD -->
+        <section id="view-dashboard" class="view-section active">
+          <div class="section-toolbar">
+            <div class="filter-group">
+              <label for="dashboard-date" class="sr-only">Tanggal Ringkasan</label>
+              <input type="date" id="dashboard-date" class="form-control">
+            </div>
+            <div class="toolbar-right">
+              <button type="button" id="btn-open-install-guide" class="btn btn-outline btn-sm">Panduan Instal PWA</button>
+            </div>
+          </div>
+
+          <div class="stats-grid" id="dashboard-stats">
+            <article class="stat-card">
+              <span class="stat-label">Siswa Aktif</span>
+              <strong class="stat-value" id="stat-students">0</strong>
+              <span class="stat-meta">Terdaftar di master</span>
+            </article>
+            <article class="stat-card stat-success">
+              <span class="stat-label">Hadir Hari Ini</span>
+              <strong class="stat-value" id="stat-hadir">0</strong>
+              <span class="stat-meta" id="stat-attendance-detail">Izin: 0 | Sakit: 0 | Alpa: 0</span>
+            </article>
+            <article class="stat-card">
+              <span class="stat-label">Koreksi Kitab</span>
+              <strong class="stat-value" id="stat-kitab">0</strong>
+              <span class="stat-meta">Total catatan berkala</span>
+            </article>
+            <article class="stat-card">
+              <span class="stat-label">Catatan Penilaian</span>
+              <strong class="stat-value" id="stat-grades">0</strong>
+              <span class="stat-meta" id="stat-grades-detail">Harian: 0 | Syafawi: 0 | UAS: 0</span>
+            </article>
+          </div>
+
+          <div class="dashboard-panels">
+            <div class="card">
+              <div class="card-header">
+                <h3>Akses Cepat Modul</h3>
+              </div>
+              <div class="quick-links">
+                <button type="button" class="quick-card" data-jump="attendance">
+                  <strong>Absensi QR Text</strong>
+                  <span>Catat &amp; lihat kehadiran siswa</span>
+                </button>
+                <button type="button" class="quick-card" data-jump="kitab">
+                  <strong>Koreksi Kitab</strong>
+                  <span>Progres bacaan &amp; halaman kitab</span>
+                </button>
+                <button type="button" class="quick-card" data-jump="daily">
+                  <strong>Nilai Harian</strong>
+                  <span>Evaluasi &amp; tugas harian siswa</span>
+                </button>
+                <button type="button" class="quick-card" data-jump="syafawi">
+                  <strong>Nilai Syafawi</strong>
+                  <span>Rekap ujian lisan &amp; hafalan</span>
+                </button>
+                <button type="button" class="quick-card" data-jump="uas">
+                  <strong>Nilai UAS</strong>
+                  <span>Ujian Akhir Semester</span>
+                </button>
+                <button type="button" class="quick-card" data-jump="students">
+                  <strong>Master Siswa</strong>
+                  <span>Daftar NIS, kelas, dan QR text</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3>Status Mode Akses</h3>
+              </div>
+              <p id="access-mode-description" class="muted-text">
+                Anda sedang mengakses aplikasi dalam <strong>Mode Publik (Read-Only)</strong>. Seluruh rekap dapat dilihat langsung. Untuk melakukan pemindaian QR, input nilai, koreksi kitab, atau mengubah data, masuk ke <strong>Mode Admin</strong>.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- VIEW: ABSENSI QR -->
+        <section id="view-attendance" class="view-section">
+          <!-- Panel Scan QR Khusus Admin -->
+          <div id="admin-qr-panel" class="card admin-only hidden">
+            <div class="card-header">
+              <h3>Pemindaian / Input Absensi QR Text</h3>
+              <button type="button" id="btn-toggle-camera" class="btn btn-outline btn-sm">Buka Kamera QR</button>
+            </div>
+
+            <div id="camera-container" class="camera-box hidden">
+              <video id="qr-video" playsinline muted></video>
+              <p id="camera-status" class="muted-text">Arahkan kamera ke kode QR siswa...</p>
+            </div>
+
+            <form id="form-qr-attendance" class="form-grid">
+              <div class="form-group span-2">
+                <label for="qr-input-text">QR Text Siswa *</label>
+                <input type="text" id="qr-input-text" class="form-control" placeholder="Tempel atau pindai QR text sesuai pola siswa..." autocomplete="off" required>
+              </div>
+              <div class="form-group">
+                <label for="qr-date">Tanggal *</label>
+                <input type="date" id="qr-date" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label for="qr-session">Sesi *</label>
+                <input type="text" id="qr-session" class="form-control" value="Pagi" placeholder="Contoh: Pagi / Sore" required>
+              </div>
+              <div class="form-group">
+                <label for="qr-status">Status Kehadiran *</label>
+                <select id="qr-status" class="form-control" required>
+                  <option value="HADIR">HADIR</option>
+                  <option value="IZIN">IZIN</option>
+                  <option value="SAKIT">SAKIT</option>
+                  <option value="ALPA">ALPA</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="qr-notes">Catatan (Opsional)</label>
+                <input type="text" id="qr-notes" class="form-control" placeholder="Keterangan tambahan">
+              </div>
+              <div class="form-actions span-2">
+                <button type="submit" class="btn btn-primary">Simpan Absensi QR</button>
+                <button type="button" id="btn-open-manual-attendance" class="btn btn-outline">Input Absensi Manual</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h3>Daftar Kehadiran Siswa</h3>
+              <span id="count-attendance" class="badge">0 data</span>
+            </div>
+            <div class="filter-bar">
+              <input type="search" id="filter-attendance-search" class="form-control" placeholder="Cari nama atau NIS...">
+              <input type="date" id="filter-attendance-date" class="form-control">
+              <select id="filter-attendance-class" class="form-control">
+                <option value="">Semua Kelas</option>
+              </select>
+              <button type="button" id="btn-apply-attendance-filter" class="btn btn-secondary">Filter</button>
+            </div>
+            <div id="list-attendance" class="data-container"></div>
+          </div>
+        </section>
+
+        <!-- VIEW: KOREKSI KITAB -->
+        <section id="view-kitab" class="view-section">
+          <div class="card">
+            <div class="card-header">
+              <h3>Pendataan Koreksi Kitab Berkala</h3>
+              <div class="header-actions">
+                <span id="count-kitab" class="badge">0 data</span>
+                <button type="button" class="btn btn-primary btn-sm admin-only hidden" data-create-module="kitab">+ Tambah Koreksi</button>
+              </div>
+            </div>
+            <div class="filter-bar">
+              <input type="search" id="filter-kitab-search" class="form-control" placeholder="Cari nama, NIS, atau kitab...">
+              <input type="date" id="filter-kitab-date" class="form-control">
+              <select id="filter-kitab-class" class="form-control">
+                <option value="">Semua Kelas</option>
+              </select>
+              <button type="button" id="btn-apply-kitab-filter" class="btn btn-secondary">Filter</button>
+            </div>
+            <div id="list-kitab" class="data-container"></div>
+          </div>
+        </section>
+
+        <!-- VIEW: NILAI HARIAN -->
+        <section id="view-daily" class="view-section">
+          <div class="card">
+            <div class="card-header">
+              <h3>Pendataan Nilai Harian</h3>
+              <div class="header-actions">
+                <span id="count-daily" class="badge">0 data</span>
+                <button type="button" class="btn btn-primary btn-sm admin-only hidden" data-create-module="daily">+ Tambah Nilai Harian</button>
+              </div>
+            </div>
+            <div class="filter-bar">
+              <input type="search" id="filter-daily-search" class="form-control" placeholder="Cari nama, NIS, atau materi...">
+              <input type="date" id="filter-daily-date" class="form-control">
+              <select id="filter-daily-class" class="form-control">
+                <option value="">Semua Kelas</option>
+              </select>
+              <button type="button" id="btn-apply-daily-filter" class="btn btn-secondary">Filter</button>
+            </div>
+            <div id="list-daily" class="data-container"></div>
+          </div>
+        </section>
+
+        <!-- VIEW: NILAI SYAFAWI -->
+        <section id="view-syafawi" class="view-section">
+          <div class="card">
+            <div class="card-header">
+              <h3>Pendataan Nilai Syafawi</h3>
+              <div class="header-actions">
+                <span id="count-syafawi" class="badge">0 data</span>
+                <button type="button" class="btn btn-primary btn-sm admin-only hidden" data-create-module="syafawi">+ Tambah Nilai Syafawi</button>
+              </div>
+            </div>
+            <div class="filter-bar">
+              <input type="search" id="filter-syafawi-search" class="form-control" placeholder="Cari nama, NIS, atau materi...">
+              <input type="text" id="filter-syafawi-period" class="form-control" placeholder="Filter periode (mis. Ganjil 2026/2027)">
+              <select id="filter-syafawi-class" class="form-control">
+                <option value="">Semua Kelas</option>
+              </select>
+              <button type="button" id="btn-apply-syafawi-filter" class="btn btn-secondary">Filter</button>
+            </div>
+            <div id="list-syafawi" class="data-container"></div>
+          </div>
+        </section>
+
+        <!-- VIEW: NILAI UAS -->
+        <section id="view-uas" class="view-section">
+          <div class="card">
+            <div class="card-header">
+              <h3>Pendataan Ujian Akhir Semester (UAS)</h3>
+              <div class="header-actions">
+                <span id="count-uas" class="badge">0 data</span>
+                <button type="button" class="btn btn-primary btn-sm admin-only hidden" data-create-module="uas">+ Tambah Nilai UAS</button>
+              </div>
+            </div>
+            <div class="filter-bar">
+              <input type="search" id="filter-uas-search" class="form-control" placeholder="Cari nama, NIS, atau mapel...">
+              <select id="filter-uas-period" class="form-control">
+                <option value="">Semua Semester</option>
+                <option value="GANJIL">GANJIL</option>
+                <option value="GENAP">GENAP</option>
+              </select>
+              <select id="filter-uas-class" class="form-control">
+                <option value="">Semua Kelas</option>
+              </select>
+              <button type="button" id="btn-apply-uas-filter" class="btn btn-secondary">Filter</button>
+            </div>
+            <div id="list-uas" class="data-container"></div>
+          </div>
+        </section>
+
+        <!-- VIEW: DATA SISWA -->
+        <section id="view-students" class="view-section">
+          <div class="card">
+            <div class="card-header">
+              <h3>Master Data Siswa</h3>
+              <div class="header-actions">
+                <span id="count-students" class="badge">0 siswa</span>
+                <button type="button" class="btn btn-primary btn-sm admin-only hidden" data-create-module="students">+ Tambah Siswa</button>
+              </div>
+            </div>
+            <div class="filter-bar">
+              <input type="search" id="filter-students-search" class="form-control" placeholder="Cari nama, NIS, atau QR text...">
+              <select id="filter-students-class" class="form-control">
+                <option value="">Semua Kelas</option>
+              </select>
+              <button type="button" id="btn-apply-students-filter" class="btn btn-secondary">Filter</button>
+            </div>
+            <div id="list-students" class="data-container"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- Bottom Navigation Bar (HP Android) -->
+    <nav class="bottom-nav mobile-only" id="mobile-nav" aria-label="Navigasi Mobile">
+      <button type="button" class="bottom-nav-item active" data-view="dashboard">
+        <span>&#9638;</span>
+        <small>Beranda</small>
+      </button>
+      <button type="button" class="bottom-nav-item" data-view="attendance">
+        <span>&#9745;</span>
+        <small>Absensi</small>
+      </button>
+      <button type="button" class="bottom-nav-item" data-view="kitab">
+        <span>&#128214;</span>
+        <small>Kitab</small>
+      </button>
+      <button type="button" class="bottom-nav-item" data-view="daily">
+        <span>&#9998;</span>
+        <small>Harian</small>
+      </button>
+      <button type="button" class="bottom-nav-item" data-view="syafawi">
+        <span>&#127908;</span>
+        <small>Syafawi</small>
+      </button>
+      <button type="button" class="bottom-nav-item" data-view="uas">
+        <span>&#127891;</span>
+        <small>UAS</small>
+      </button>
+      <button type="button" class="bottom-nav-item" data-view="students">
+        <span>&#128101;</span>
+        <small>Siswa</small>
+      </button>
+    </nav>
+  </div>
+
+  <!-- MODAL: LOGIN ADMIN -->
+  <div id="modal-admin-login" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-admin-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modal-admin-title">Masuk Mode Admin</h3>
+        <button type="button" class="btn-close" data-close-modal="modal-admin-login" aria-label="Tutup">&times;</button>
+      </div>
+      <form id="form-admin-login" class="modal-body">
+        <p class="muted-text">Masukkan PIN Admin untuk mengaktifkan fitur tambah, ubah, hapus, dan pemindaian absensi QR.</p>
+        <div class="form-group">
+          <label for="admin-pin-input">PIN Admin</label>
+          <input type="password" id="admin-pin-input" class="form-control" inputmode="numeric" autocomplete="current-password" placeholder="Masukkan PIN Admin" required>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" data-close-modal="modal-admin-login">Batal</button>
+          <button type="submit" class="btn btn-primary" id="btn-submit-pin">Verifikasi PIN</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: FORM CRUD DINAMIS (CREATE / UPDATE) -->
+  <div id="modal-record-form" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-record-title">
+    <div class="modal-card modal-lg">
+      <div class="modal-header">
+        <h3 id="modal-record-title">Formulir Data</h3>
+        <button type="button" class="btn-close" data-close-modal="modal-record-form" aria-label="Tutup">&times;</button>
+      </div>
+      <form id="form-record-dynamic" class="modal-body">
+        <div id="dynamic-form-fields" class="form-grid"></div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" data-close-modal="modal-record-form">Batal</button>
+          <button type="submit" class="btn btn-primary" id="btn-save-record">Simpan Data</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: PETUNJUK INSTALASI PWA -->
+  <div id="modal-install-guide" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-install-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modal-install-title">Petunjuk Instalasi Aplikasi (PWA)</h3>
+        <button type="button" class="btn-close" data-close-modal="modal-install-guide" aria-label="Tutup">&times;</button>
+      </div>
+      <div class="modal-body">
+        <h4>Google Chrome di HP Android</h4>
+        <ol class="guide-list">
+          <li>Buka alamat aplikasi ini menggunakan browser <strong>Google Chrome</strong>.</li>
+          <li>Ketuk ikon menu <strong>titik tiga (&#8942;)</strong> di pojok kanan atas browser.</li>
+          <li>Pilih <strong>Instal aplikasi</strong> atau <strong>Tambahkan ke layar utama</strong>.</li>
+          <li>Konfirmasi pemasangan; ikon <strong>SiAkad QR</strong> akan muncul di layar utama dan berjalan layar penuh (<em>standalone</em>).</li>
+        </ol>
+        <h4>Google Chrome di Desktop (Windows / macOS / Linux)</h4>
+        <ol class="guide-list">
+          <li>Buka aplikasi ini di <strong>Google Chrome</strong>.</li>
+          <li>Klik ikon <strong>Instal SiAkad QR</strong> di sisi kanan bilah alamat (URL bar) atau melalui menu <strong>&#8942; &rarr; Simpan dan bagikan &rarr; Instal halaman sebagai aplikasi</strong>.</li>
+          <li>Klik <strong>Instal</strong> untuk membuka aplikasi di jendela terpisah.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>

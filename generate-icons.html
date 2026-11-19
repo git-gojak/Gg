@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Generator Ikon PWA SiAkad QR</title>
+</head>
+<body style="font-family: sans-serif; padding: 2rem;">
+  <h2>Generator Ikon PWA (192x192, 512x512, Maskable 512x512)</h2>
+  <p>Klik tombol di bawah untuk mengunduh ketiga ikon PNG dan simpan di folder <code>assets/icons/</code>.</p>
+  <button id="btn-gen" style="padding: 0.75rem 1.25rem; font-size: 1rem; cursor: pointer;">Unduh Semua Ikon PNG</button>
+  <script>
+    function createIcon(size, maskable) {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+
+      // Latar belakang teal profesional
+      ctx.fillStyle = '#0f766e';
+      if (maskable) {
+        ctx.fillRect(0, 0, size, size);
+      } else {
+        const r = size * 0.18;
+        ctx.beginPath();
+        ctx.roundRect(0, 0, size, size, r);
+        ctx.fill();
+      }
+
+      // Zona aman (safe zone 80% untuk maskable)
+      const pad = maskable ? size * 0.22 : size * 0.16;
+      const inner = size - pad * 2;
+
+      // Bingkai QR putih
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = Math.max(4, size * 0.035);
+      ctx.strokeRect(pad, pad, inner, inner);
+
+      // Tiga kotak sudut khas QR
+      const box = inner * 0.26;
+      const inset = inner * 0.1;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(pad + inset, pad + inset, box, box);
+      ctx.fillRect(pad + inner - inset - box, pad + inset, box, box);
+      ctx.fillRect(pad + inset, pad + inner - inset - box, box, box);
+
+      // Aksen buku/kitab di sudut kanan bawah
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(pad + inner - inset - box, pad + inner - inset - box, box, box);
+
+      return canvas.toDataURL('image/png');
+    }
+
+    document.getElementById('btn-gen').addEventListener('click', () => {
+      const files = [
+        { name: 'icon-192.png', url: createIcon(192, false) },
+        { name: 'icon-512.png', url: createIcon(512, false) },
+        { name: 'icon-maskable-512.png', url: createIcon(512, true) }
+      ];
+      files.forEach((f, idx) => {
+        setTimeout(() => {
+          const a = document.createElement('a');
+          a.href = f.url;
+          a.download = f.name;
+          a.click();
+        }, idx * 300);
+      });
+    });
+  </script>
+</body>
+</html>

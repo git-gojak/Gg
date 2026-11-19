@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f766e">
+  <title>Offline — SiAkad QR</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+    .offline-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      max-width: 420px;
+      width: 100%;
+      padding: 2rem;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.06);
+    }
+    .offline-badge {
+      display: inline-block;
+      background: #fef3c7;
+      color: #92400e;
+      font-weight: 600;
+      font-size: 0.85rem;
+      padding: 0.35rem 0.85rem;
+      border-radius: 999px;
+      margin-bottom: 1rem;
+    }
+    h1 { font-size: 1.35rem; margin-bottom: 0.75rem; }
+    p { color: #475569; font-size: 0.95rem; line-height: 1.6; margin-bottom: 1.5rem; }
+    button {
+      background: #0f766e;
+      color: #ffffff;
+      border: none;
+      border-radius: 10px;
+      padding: 0.75rem 1.25rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+    }
+    button:hover { background: #115e59; }
+  </style>
+</head>
+<body>
+  <div class="offline-card">
+    <span class="offline-badge">Tidak Ada Koneksi Internet</span>
+    <h1>Perangkat Anda Sedang Offline</h1>
+    <p>
+      SiAkad QR membutuhkan koneksi internet untuk memuat maupun menyimpan data terbaru ke Google Sheets. Demi keamanan, data akademik dan kredensial tidak disimpan di cache lokal.
+    </p>
+    <button type="button" onclick="window.location.reload()">Coba Muat Ulang</button>
+  </div>
+</body>
+</html>

@@ -1,1 +1,33 @@
-manifest.webmanifest
+
+{
+  "name": "SiAkad QR — Sistem Absensi & Akademik Siswa",
+  "short_name": "SiAkad QR",
+  "description": "Aplikasi pendataan absensi QR text, koreksi kitab berkala, nilai harian, nilai syafawi, dan UAS.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f8fafc",
+  "theme_color": "#0f766e",
+  "lang": "id",
+  "icons": [
+    {
+      "src": "./assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./assets/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

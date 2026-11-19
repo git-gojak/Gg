@@ -2,7 +2,7 @@ export const APP_CONFIG = Object.freeze({
   APP_NAME: 'SiAkad QR',
   APP_VERSION: '1.0.0',
   // Ganti dengan URL deployment Google Apps Script Web App (/exec) pada Tahap 4
-  GAS_WEB_APP_URL: 'https://script.google.com/macros/s/REPLACE_WITH_DEPLOYMENT_ID/exec',
+  GAS_WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbzK9AesWzi9BcBPV_HnLhB2-WrXZ7RSBXn3PQfiYK4DZAGxfheMPaa6AUCrcEJjmlfj/exec',
   SESSION_PIN_KEY: 'siakad_admin_session_pin',
   MODULES: {
     STUDENTS: 'students',
